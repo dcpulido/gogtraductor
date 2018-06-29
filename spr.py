@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 # Requires PyAudio and PySpeech.
 import os
-import  sys
+os.environ['KIVY_GL_BACKEND'] = 'sdl2'
+import sys
+
 from googletrans import Translator
 import speech_recognition as sr
 from google.cloud import texttospeech_v1beta1
 from playsound import playsound
+
 import configparser
 import logging
+
+from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.config import Config
+from kivy.core.window import Window
 
 
 def ConfigSectionMap(section,
@@ -46,7 +56,7 @@ def recognise_audio(audio, lang):
     try:
         r = sr.Recognizer()
         return r.recognize_google(audio,
-                                  language=lang)
+                                  language=str(lang))
     except sr.UnknownValueError:
         print("could not understand audio")
     except sr.RequestError as e:
@@ -83,6 +93,7 @@ def play_sound(data):
         playsound('./output.mp3')
         os.system("rm ./output.mp3")
 
+
 def usage():
     toret = "python3 " + sys.argv[0] + "\n"
     toret += "\tno arguments default behaviour\n"
@@ -91,8 +102,8 @@ def usage():
     toret += "\t-o language output (en-US fr-FR es-ES ...) \n"
     return toret
 
-if __name__ == '__main__':
-    language_conf = get_general_conf("lang")
+
+def process_args(dic):
     if len(sys.argv) > 1:
         for i in range(1, len(sys.argv)):
             if sys.argv[i] == "-h":
@@ -112,19 +123,48 @@ if __name__ == '__main__':
                     print("FAI AS COUSAS BEN CARALLO!!")
                     print(usage())
                     sys.exit(0)
+
+
+class TtranslatorApp(App):
+    def build(self):
+        Window.size = (1000, 1000)
+        parent = Widget()
+        parent.height = 1000
+        parent.width = 1000
+        self.clearbtn = Button(text='Translate',
+                               width=parent.width,
+                               height=parent.height,
+                               font_size = '50dp')
+
+        self.clearbtn.width = parent.width
+        self.clearbtn.height = parent.height
+        parent.add_widget(self.clearbtn)
+        self.clearbtn.bind(on_release=self.main_pprocess)
+        return parent
+
+    def main_pprocess(self, obj):
+        self.clearbtn.text="SAY SOMETHING!"
+        audio = get_audio()
+        recognition = recognise_audio(audio, language_conf["lang_input"])
+        self.clearbtn.text= recognition + "\n"
+        print("RECOGNITION: " + recognition)
+        trans = translate(recognition, language_conf["lang_output"])
+        self.clearbtn.text+=trans.text
+        print("TRANSLATION: " + trans.text)
+        #output = tx_to_sp(trans, language_conf["lang_output"])
+        # play_sound(output)
+
+
+if __name__ == '__main__':
+    Config.set('graphics', 'width', '1000')
+    Config.set('graphics', 'height', '1000')
+    Config.write()
+
+    language_conf = get_general_conf("lang")
+    process_args(language_conf)
     print("AKKA TRADUCtOR")
     print("INPUT: " + language_conf["lang_input"])
     print("OUTPUT: " + language_conf["lang_output"])
-    try:
-        while True:
-            input("NEXT!! (enter)")
-            audio = get_audio()
-            recognition = recognise_audio(audio, language_conf["lang_input"])
-            print("RECOGNITION: " + recognition)
-            trans = translate(recognition, language_conf["lang_output"])
-            print("TRANSLATION: " + trans.text)
-            output = tx_to_sp(trans, language_conf["lang_output"])
-            play_sound(output)
-    except KeyboardInterrupt:
-        print("\nGood Bye!...")
-        sys.exit(0)
+
+    TtranslatorApp().run()
+

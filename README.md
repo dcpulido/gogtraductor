@@ -1,6 +1,6 @@
 Uso de las diferentes apis de google para traducir voz
 
-python 3!
+python 2!!
 
 1_Conseguir credenciales en tu consoola de google para el text to speech 
 
@@ -14,4 +14,4 @@ https://cloud.google.com/text-to-speech/docs/reference/libraries#client-librarie
 
 https://cloud.google.com/speech-to-text/docs/languages
 
-5_Ejecutar python 3spr.py 
+5_Ejecutar python spr.py 
